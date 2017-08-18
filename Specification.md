@@ -15,10 +15,25 @@ When adding documents, an entry is generated for that document.
 A document has to be in JSON(no BSON bullshit from mongo).
 
 A document entry is the document object with metadata about the document.
-Those metadata are included in the following fields:
+The `ObjectID` concept from Mongo is ported to Storcord through a tuple
+of the channel ID of the entry and the message ID of the entry.
+
+`ObjectID` isn't provided in the document entry itself, the client
+needs to index it manually thgouth its own means.
+
+The basic metadata a document entry can provide is:
  - `_type`[int]: The type of this entry
    - `0` for an actual document.
    - `1` for a document shard.
+
+### Document Examples
+
+```javascript
+{
+    "_type": 0,
+    "raw": "{\"a\": 2}"
+}
+```
 
 ### Document Sharding
 
@@ -26,6 +41,22 @@ For documents that their total JSON(plus metadata) gets bigger than 2000 charact
 the document becomes sharded across document shards, each shard has chunks of the actual
 JSON encoded document but they have metadata on how to find the other shards so you can
 rebuild the entire document witn only one of the shards.
+
+Document shards have extra fields:
+ - `_shard`[int]: The Shard ID of this entry.
+ - `_range`[tuple[int, int]]: The character location range that this shard provides.
+
+#### Document shard example
+
+```javascript
+{
+    "_type": 1,
+    "_shard": 0,
+    "_range": [0, 100],
+    "raw": "\"a\": 2, 3: 4,",
+}
+
+```
 
 ## Querying documents
 
