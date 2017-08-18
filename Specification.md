@@ -37,7 +37,6 @@ Query cases:
  - You want to Simple query a document and you have its ObjectID.
    - Get the channel and message IDs from the ObjectID and get the document.
    - If it is a shard, get the other shards.
-
    - Multiple query case: giving just a channel ID returns all documents that are in it.
 
  - Second case: You want to Simple query a document by its raw content.
