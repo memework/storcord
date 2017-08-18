@@ -23,7 +23,7 @@ needs to index it manually thgouth its own means.
 
 The basic metadata a document entry can provide is:
  - `_type`[int]: The type of this entry
-   - `0` for an actual document.
+   - `0` for an actual full document(not sharded).
    - `1` for a document shard.
 
 ### Document Examples
