@@ -29,8 +29,26 @@ rebuild the entire document witn only one of the shards.
 
 ## Querying documents
 
-**TODO: think about it**
+Queries have two types:
+ - Simple query: where you just want 1 document returned, the query finishes itself.
+ - Multiple query: where you want all the documents matching it, way more expensive.
 
+Query cases:
+ - You want to Simple query a document and you have its ObjectID.
+   - Get the channel and message IDs from the ObjectID and get the document.
+   - If it is a shard, get the other shards.
+
+   - Multiple query case: giving just a channel ID returns all documents that are in it.
+
+ - Second case: You want to Simple query a document by its raw content.
+   - O(n\*C) operation, with C being the number of channels you are separating your documents with
+   - You have to go through all the channels and find the 1st document containing your query.
+   - For Multiple query, you'll have to go through all the documents.
+
+ - Third case: You want to Simple query a document by its JSON data.
+   - Follow the Second Case strategy, but load the document's JSON and search through it.
+   - Same follows for Mutiple query.
+ 
 ## Updating documents
 
 If the document to be updated is a single unsharded document, updating
