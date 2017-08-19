@@ -14,7 +14,7 @@ from .document import FullDocument
 
 log = logging.getLogger(__name__)
 
-InsertResult = namedtuple('InsertResult', 'inserted')
+InsertResult = namedtuple('InsertResult', 'inserted doc')
 UpdateResult = namedtuple('UpdateResult', 'updated')
 DeleteResult = namedtuple('DeleteResult', 'deleted')
 
@@ -60,7 +60,7 @@ class StorcordClient:
             coll = Collection(self, chan)
             self.collections.append(coll)
 
-        await self.load_indexdb
+        await self.load_indexdb()
 
     async def create_collection(self):
         chan_name = f'collection-{hashlib.md5(os.urandom(100)).hexdigest()[:8]}'
@@ -95,10 +95,10 @@ class StorcordClient:
 
         try:
             await coll.insert(doc)
-            return InsertResult(1)
+            return InsertResult(1, doc)
         except:
             log.exception('shit')
-            return InsertResult(0)
+            return InsertResult(0, None)
 
     async def simple_query(self, query):
         for coll in self.collections:

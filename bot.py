@@ -61,5 +61,6 @@ async def insert(ctx, *, data: str):
     res = await ctx.bot.storcord.insert_one(j)
     await ctx.send(res)
 
+bot.load_extension('exec')
 bot.run(config.token)
 

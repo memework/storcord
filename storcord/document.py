@@ -12,6 +12,9 @@ class FullDocument:
         self.raw = raw
         self.update(raw)
 
+    def __repr__(self):
+        return f'FullDocument(type={self.type}, {self.obj!r})'
+
     def update(self, raw):
         self.type = raw['_type']
         if self.type != DocumentType.FULL:
@@ -19,6 +22,9 @@ class FullDocument:
 
         self.raw_obj = raw['raw']
         self.obj = json.loads(self.raw_obj)
+
+    def match(self, query):
+        return all(query[k] == self.obj[k] for k in query)
 
     @property
     def to_raw(self):
