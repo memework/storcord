@@ -24,7 +24,7 @@ class FullDocument:
         self.obj = json.loads(self.raw_obj)
 
     def match(self, query):
-        return all(query[k] == self.obj[k] for k in query)
+        return all(query.get(k) == self.obj.get(k) for k in query)
 
     @property
     def to_raw(self):

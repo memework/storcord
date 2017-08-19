@@ -1,4 +1,9 @@
 import json
+import logging
+
+from .document import FullDocument
+
+log = logging.getLogger(__name__)
 
 class Collection:
     def __init__(self, client, channel):
@@ -8,6 +13,16 @@ class Collection:
 
     def __repr__(self):
         return f'Collection({self.chan!r})'
+
+    async def get_single(self, message_id: int) -> 'Document':
+        """Get a single document"""
+        message_id = int(message_id)
+
+        m = await self.chan.get_message(message_id)
+        if m is not None:
+            return FullDocument(json.loads(m.content))
+
+        return
 
     async def simple_query(self, query: dict) -> 'Document':
         """Make a Simple Query to a collection.
@@ -26,15 +41,7 @@ class Collection:
             If no documents were found.
         """
         if '_id' in query:
-            # search by objectID
-            wanted = query['_id']
-            if wanted[0] != self.chan.id:
-                return
-
-            m = await self.chan.get_message(wanted[1])
-            if m is not None:
-                return FullDocument(json.loads(m.content))
-            return
+            return await self.get_single(query['_id'])
 
         if 'raw' in query:
             # Search raw-y
@@ -43,6 +50,7 @@ class Collection:
             for message_id in self.client.indexdb[self.chan.id]:
                 m = await self.chan.get_message(message_id)
                 if raw in m.content:
+                    log.debug(m.content)
                     return FullDocument(json.loads(m.content))
 
             return
@@ -57,6 +65,6 @@ class Collection:
         return
 
     async def insert(self, document):
-        m = await self.chan.send(document.to_raw)
+        m = await self.chan.send(json.dumps(document.to_raw))
         self.client.indexdb[self.chan.id].append(m.id)
 

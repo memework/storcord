@@ -46,6 +46,7 @@ bot = StorcordBot(description='im shit', command_prefix='stor!')
 
 @bot.command()
 async def ping(ctx):
+    """pinge!"""
     t1 = time.monotonic()
     m = await ctx.send('.')
     t2 = time.monotonic()
@@ -55,6 +56,7 @@ async def ping(ctx):
 @bot.command()
 @gay_only()
 async def insert(ctx, *, data: str):
+    """Insert a document."""
     try:
         j = json.loads(data)
     except:
@@ -65,13 +67,26 @@ async def insert(ctx, *, data: str):
 
 @bot.command()
 async def idxdb(ctx):
+    """Show IndexDB."""
     await ctx.send(repr(ctx.bot.storcord.indexdb))
 
 @bot.command()
 @gay_only()
 async def saveidxdb(ctx):
+    """Save IndexDB."""
     await ctx.bot.storcord.save_indexdb()
     await ctx.send('ok')
+
+@bot.command()
+async def squery(ctx, *, raw: str):
+    """Make a simple query"""
+    try:
+        raw = json.loads(raw)
+    except:
+        raw = {'raw': raw}
+
+    res = await ctx.bot.storcord.simple_query(raw)
+    await ctx.send(repr(res))
 
 bot.load_extension('exec')
 bot.run(config.token)

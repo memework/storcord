@@ -165,6 +165,21 @@ class StorcordClient:
             return InsertResult(0, None)
 
     async def simple_query(self, query):
+        if '_id' in query:
+            wanted = int(query['_id'])
+
+            for chan_id, msgs in self.indexdb.items():
+                try:
+                    msgs.index(wanted)
+
+                    # TODO: not be lazy and do _get or something
+                    coll = [c for c in self.collections if c.id == chan_id][0]
+                    return await coll.get_single(wanted)
+                except ValueError:
+                    pass
+
+            return
+
         for coll in self.collections:
             doc = await coll.simple_query(query)
             if doc is not None:
