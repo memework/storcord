@@ -1,9 +1,12 @@
 import random
 import logging
 import json
+import hashlib
+import os
 
 from collections import namedtuple
 
+import discord
 
 from .enums import DocumentType
 from .collection import Collection
@@ -16,10 +19,27 @@ UpdateResult = namedtuple('UpdateResult', 'updated')
 DeleteResult = namedtuple('DeleteResult', 'deleted')
 
 class StorcordClient:
-    def __init__(self, bot, guild_id, collections):
+    def __init__(self, bot, guild_id, collection_ids):
         self.bot = bot
         self.guild_id = guild_id
-        self.collection_ids = collections
+
+        self.make_coll = False
+        if isinstance(collection_ids, int):
+            self.make_coll = True
+            self.collections = collection_ids
+        else:
+            self.collection_ids = collection_ids
+
+    async def create_indexdb(self):
+        self.indexdb = {}
+        pass
+
+    async def load_indexdb(self):
+        self.indexdb = {}
+        indexdb_chan = discord.utils.get(self.guild.channels, name='indexdb')
+
+    async def save_indexdb(self):
+        pass
 
     async def ready(self):
         """To be called when your bot's cache is considered
@@ -40,25 +60,45 @@ class StorcordClient:
             coll = Collection(self, chan)
             self.collections.append(coll)
 
+        await self.load_indexdb
+
     async def create_collection(self):
-        chan_name = f'coll-{hashlib.md5(os.urandom(100)).hexdigest()[:8]}'
-        chan = await self.guild.create_channel(chan_name)
+        chan_name = f'collection-{hashlib.md5(os.urandom(100)).hexdigest()[:8]}'
+        chan = await self.guild.create_text_channel(chan_name)
 
         coll = Collection(self, chan)
         self.collections.append(coll)
         return True
-    
+
+    async def init(self):
+        """Used for DB initialization."""
+        log.info('Initializing %d collections', self.collections)
+        self.guild = self.bot.get_guild(self.guild_id)
+
+        colls = self.collections
+        self.collections = []
+        for i in range(colls):
+            await self.create_collection()
+
+        await self.create_indexdb()
+
     async def insert_one(self, raw_doc):
         # wrap it up in a full document, for now
-        doc = Document({
-            '_type': DocumentTypes.FULL,
+        doc = FullDocument({
+            '_type': DocumentType.FULL,
             'raw': json.dumps(raw_doc),
         })
 
         # choose a random collection
         coll = random.choice(self.collections)
         doc.coll = coll
-        await coll.insert(doc)
+
+        try:
+            await coll.insert(doc)
+            return InsertResult(1)
+        except:
+            log.exception('shit')
+            return InsertResult(0)
 
     async def simple_query(self, query):
         for coll in self.collections:

@@ -1,4 +1,6 @@
 import logging
+import time
+import json
 
 from discord.ext import commands
 
@@ -9,16 +11,21 @@ logging.basicConfig(level=logging.DEBUG)
 logging.getLogger('discord').setLevel(logging.INFO)
 logging.getLogger('websockets').setLevel(logging.INFO)
 
+log = logging.getLogger(__name__)
+
 class StorcordBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
 
-        self.storcord = storcord.StorcordManager(self, \
+        self.storcord = storcord.StorcordClient(self, \
             config.storcord_guild, config.storcord_collections)
 
     async def on_ready(self):
         log.info(f'Logged in! {self.user!s}')
-        self.loop.create_task(self.storcord.ready())
+        if self.storcord.make_coll:
+            await self.storcord.init()
+        else:
+            await self.storcord.ready()
 
     async def on_message(self, message):
         author = message.author
@@ -44,7 +51,7 @@ async def ping(ctx):
     await m.edit(content=f'{delta}ms')
 
 @bot.command()
-@bot.is_owner()
+@commands.is_owner()
 async def insert(ctx, *, data: str):
     try:
         j = json.loads(data)
