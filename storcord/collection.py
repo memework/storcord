@@ -2,6 +2,7 @@ import json
 
 class Collection:
     def __init__(self, client, channel):
+        self.id = channel.id
         self.chan = channel
         self.client = client
 
@@ -39,7 +40,7 @@ class Collection:
             # Search raw-y
             raw = query['raw']
 
-            for (chan_id, message_id) in self.client.indexdb[self.chan.id]:
+            for message_id in self.client.indexdb[self.chan.id]:
                 m = await self.chan.get_message(message_id)
                 if raw in m.content:
                     return FullDocument(json.loads(m.content))
@@ -47,7 +48,7 @@ class Collection:
             return
 
         # search by JSON, the most expensive
-        for (chan_id, message_id) in self.client.indexdb[self.chan.id]:
+        for message_id in self.client.indexdb[self.chan.id]:
             m = await self.chan.get_message(message_id)
             if m is not None:
                 doc = FullDocument(json.loads(m.content))
@@ -57,5 +58,5 @@ class Collection:
 
     async def insert(self, document):
         m = await self.chan.send(document.to_raw)
-        self.client.indexdb[self.chan.id].append((self.chan.id, m.id))
+        self.client.indexdb[self.chan.id].append(m.id)
 

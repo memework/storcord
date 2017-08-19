@@ -13,6 +13,11 @@ logging.getLogger('websockets').setLevel(logging.INFO)
 
 log = logging.getLogger(__name__)
 
+def gay_only():
+    return commands.check(lambda m: m.author.id in \
+        (162819866682851329, 97104885337575424, 150745989836308480))
+
+
 class StorcordBot(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args,**kwargs)
@@ -22,10 +27,7 @@ class StorcordBot(commands.Bot):
 
     async def on_ready(self):
         log.info(f'Logged in! {self.user!s}')
-        if self.storcord.make_coll:
-            await self.storcord.init()
-        else:
-            await self.storcord.ready()
+        await self.storcord.ready()
 
     async def on_message(self, message):
         author = message.author
@@ -51,7 +53,7 @@ async def ping(ctx):
     await m.edit(content=f'{delta}ms')
 
 @bot.command()
-@commands.is_owner()
+@gay_only()
 async def insert(ctx, *, data: str):
     try:
         j = json.loads(data)
@@ -60,6 +62,16 @@ async def insert(ctx, *, data: str):
 
     res = await ctx.bot.storcord.insert_one(j)
     await ctx.send(res)
+
+@bot.command()
+async def idxdb(ctx):
+    await ctx.send(repr(ctx.bot.storcord.indexdb))
+
+@bot.command()
+@gay_only()
+async def saveidxdb(ctx):
+    await ctx.bot.storcord.save_indexdb()
+    await ctx.send('ok')
 
 bot.load_extension('exec')
 bot.run(config.token)
