@@ -148,10 +148,11 @@ class StorcordClient:
 
     async def insert_one(self, raw_doc):
         # wrap it up in a full document, for now
-        doc = FullDocument({
+        m_content = json.dumps({
             '_type': DocumentType.FULL,
             'raw': json.dumps(raw_doc),
         })
+        doc = FullDocument(namedtuple('NotAMessage', 'content id')(m_content, -1))
 
         # choose a random collection
         coll = random.choice(self.collections)
@@ -192,7 +193,7 @@ class StorcordClient:
         if doc is None:
             return UpdateResult(0)
         
-        newdoc = FullDocument({**doc.as_json, **set_on_doc})
+        doc.update(set_on_doc)
 
         if len(newdoc.to_raw_json) > 2000:
             return UpdateResult(0, 'New document cant be sharded, yet.')
@@ -209,7 +210,8 @@ class StorcordClient:
         if doc is None:
             return DeleteResult(0)
 
-        await doc.delete()
+        coll = [c for c in self.collections if c.id == doc.message.channel.id][0]
+        await coll.delete(doc)
         return DeleteResult(1)
 
     async def multiple_query(self, query):

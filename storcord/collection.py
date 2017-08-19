@@ -20,7 +20,7 @@ class Collection:
 
         m = await self.chan.get_message(message_id)
         if m is not None:
-            return FullDocument(json.loads(m.content))
+            return FullDocument(m)
 
         return
 
@@ -51,7 +51,7 @@ class Collection:
                 m = await self.chan.get_message(message_id)
                 if raw in m.content:
                     log.debug(m.content)
-                    return FullDocument(json.loads(m.content))
+                    return FullDocument(m)
 
             return
 
@@ -59,7 +59,7 @@ class Collection:
         for message_id in self.client.indexdb[self.chan.id]:
             m = await self.chan.get_message(message_id)
             if m is not None:
-                doc = FullDocument(json.loads(m.content))
+                doc = FullDocument(m)
                 if doc.match(query):
                     return doc
         return
@@ -67,4 +67,12 @@ class Collection:
     async def insert(self, document):
         m = await self.chan.send(json.dumps(document.to_raw))
         self.client.indexdb[self.chan.id].append(m.id)
+
+    async def delete(self, document):
+        try:
+            self.client.indexdb[self.id].pop(document.message.id)
+        except IndexError:
+            pass
+
+        return await document.message.delete()
 

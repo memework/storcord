@@ -8,7 +8,9 @@ log = logging.getLogger(__name__)
 
 class FullDocument:
     """Represents a single, contained Storcord document"""
-    def __init__(self, raw):
+    def __init__(self, message):
+        self.message = message
+        raw = json.loads(message.content)
         self.raw = raw
         self.update(raw)
 

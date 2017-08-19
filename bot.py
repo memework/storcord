@@ -88,6 +88,22 @@ async def squery(ctx, *, raw: str):
     res = await ctx.bot.storcord.simple_query(raw)
     await ctx.send(repr(res))
 
+@bot.command()
+@gay_only()
+async def sdel(ctx, *, raw: str):
+    """Delete a document through simple query.
+    
+    Equals to deleteOne from Mongo.
+    """
+    try:
+        raw = json.loads(raw)
+    except:
+        raw = {'raw': raw}
+
+    res = await ctx.bot.storcord.delete_one(raw)
+    await ctx.send(repr(res))
+
+
 bot.load_extension('exec')
 bot.run(config.token)
 
