@@ -153,6 +153,13 @@ class StorcordClient:
         self.collections.append(coll)
         return True
 
+    def get_collection(self, coll_id):
+        possible = [c for c in self.collections if c.id == coll_id]
+        try:
+            return possible[0]
+        except IndexError:
+            return
+
     async def init(self):
         """Used for DB initialization."""
         self.guild = self.bot.get_guild(self.guild_id)
@@ -210,9 +217,7 @@ class StorcordClient:
             for chan_id, msgs in self.indexdb.items():
                 try:
                     msgs.index(wanted)
-
-                    # TODO: not be lazy and do _get or something
-                    coll = [c for c in self.collections if c.id == chan_id][0]
+                    coll = self.get_collection(chan_id)
                     return await coll.get_single(wanted)
                 except ValueError:
                     pass
@@ -236,28 +241,30 @@ class StorcordClient:
         return results
 
     async def update_one(self, query, set_on_doc):
+        """Update one document with new data."""
         doc = await self.simple_query(query)
         if doc is None:
             return UpdateResult(0)
-        
+
         doc.update(set_on_doc)
 
-        if len(newdoc.to_raw_json) > 2000:
-            return UpdateResult(0, 'New document cant be sharded, yet.')
+        if len(doc.to_raw_json) > 2000:
+            return UpdateResult(-1, 'New document cant be sharded, yet.')
             #shard = ShardedDocument(newdoc.raw)
             #await self.insert_shard(shard)
             #await doc.delete()
-            #return UpdateResult(!)
+            #return UpdateResult(1)
 
         await doc.update(set_on_doc)
         return UpdateResult(1)
 
     async def delete_one(self, query):
+        """Delete one document"""
         doc = await self.simple_query(query)
         if doc is None:
             return DeleteResult(0)
 
-        coll = [c for c in self.collections if c.id == doc.message.channel.id][0]
+        coll = self.get_collection(doc.message.channel.id)
         await coll.delete(doc)
         return DeleteResult(1)
 
