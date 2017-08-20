@@ -103,6 +103,19 @@ async def sdel(ctx, *, raw: str):
     res = await ctx.bot.storcord.delete_one(raw)
     await ctx.send(repr(res))
 
+@bot.command()
+@gay_only()
+async def supd(ctx, query: str, *, data: str):
+    """Update a document."""
+    try:
+        await ctx.send(f'`{repr(query)}`')
+        await ctx.send(f'`{repr(data)}`')
+        query = json.loads(query)
+        data = json.loads(data)
+    except:
+        return await ctx.send('Failed to parse json u dumb slut bitch')
+
+    await ctx.send(await ctx.bot.storcord.update_one(query, data))
 
 bot.load_extension('exec')
 bot.run(config.token)

@@ -185,11 +185,11 @@ class StorcordClient:
             '_type': DocumentType.FULL,
             'raw': json.dumps(raw_doc),
         })
-        doc = FullDocument(namedtuple('NotAMessage', 'content id')(m_content, -1))
+
 
         # choose a random collection
         coll = random.choice(self.collections)
-        doc.coll = coll
+        doc = FullDocument(self, namedtuple('NotAMessage', 'content id channel')(m_content, -1, coll.chan))
 
         try:
             await coll.insert(doc)
@@ -255,7 +255,7 @@ class StorcordClient:
             #await doc.delete()
             #return UpdateResult(1)
 
-        await doc.update(set_on_doc)
+        await doc.update_on_coll()
         return UpdateResult(1)
 
     async def delete_one(self, query):

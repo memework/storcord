@@ -1,6 +1,8 @@
 import json
 import logging
 
+import discord
+
 from .document import FullDocument
 
 log = logging.getLogger(__name__)
@@ -20,7 +22,7 @@ class Collection:
 
         m = await self.chan.get_message(message_id)
         if m is not None:
-            return FullDocument(m)
+            return FullDocument(self.client, m)
 
         return
 
@@ -48,18 +50,26 @@ class Collection:
             raw = query['raw']
 
             for message_id in self.client.indexdb[self.chan.id]:
-                m = await self.chan.get_message(message_id)
+                try:
+                    m = await self.chan.get_message(message_id)
+                except discord.NotFound:
+                    return
+
                 if raw in m.content:
                     log.debug(m.content)
-                    return FullDocument(m)
+                    return FullDocument(self.client, m)
 
             return
 
         # search by JSON, the most expensive
         for message_id in self.client.indexdb[self.chan.id]:
-            m = await self.chan.get_message(message_id)
+            try:
+                m = await self.chan.get_message(message_id)
+            except discord.NotFound:
+                m = None
+
             if m is not None:
-                doc = FullDocument(m)
+                doc = FullDocument(self.client, m)
                 if doc.match(query):
                     return doc
         return
@@ -75,4 +85,7 @@ class Collection:
             pass
 
         return await document.message.delete()
+
+    async def update(self, document):
+        await document.message.edit(content=document.to_raw_json)
 
