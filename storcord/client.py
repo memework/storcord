@@ -30,6 +30,20 @@ def yield_chunks(l, n):
         yield l[i:i + n]
 
 class StorcordClient:
+    """Main storcord client class.
+    
+    Attributes
+    ----------
+    bot: `bot instance`
+        Bot instance to be used by the client.
+    guild_id: int
+        Guild that is used by the client to store its data.
+    idx_message: List[int]
+        List of IndexDB messages to edit.
+    config_total_colls: int
+        Total amount of collections to create by default when running
+        :meth:`StorcordClient.init`.
+    """
     def __init__(self, bot, guild_id, total_colls):
         self.bot = bot
         self.guild_id = guild_id
@@ -38,6 +52,7 @@ class StorcordClient:
         self.config_total_colls = total_colls
 
     async def create_indexdb(self):
+        """Create an empty IndexDB."""
         self.indexdb = {}
         idxdb = await self.guild.create_text_channel('indexdb')
 
@@ -54,6 +69,7 @@ class StorcordClient:
         log.info('Created IndexDB')
 
     async def load_indexdb(self):
+        """Load the IndexDB with data from its channel."""
         self.indexdb = collections.defaultdict(list)
 
         for coll in self.collections:
@@ -82,6 +98,7 @@ class StorcordClient:
         log.info('Loaded IndexDB')
 
     async def save_indexdb(self):
+        """Save the IndexDB to its respective channel."""
         indexdb_json = json.dumps(self.indexdb)
         indexdb_chan = discord.utils.get(self.guild.channels, name='indexdb')
 
@@ -128,6 +145,7 @@ class StorcordClient:
         log.info('Finished READY')
 
     async def create_collection(self):
+        """Create a collection."""
         chan_name = f'collection-{hashlib.md5(os.urandom(100)).hexdigest()[:10]}'
         chan = await self.guild.create_text_channel(chan_name)
 
@@ -147,6 +165,14 @@ class StorcordClient:
         await self.create_indexdb()
 
     async def insert_one(self, raw_doc):
+        """Insert a document in a random collection.
+        
+        Parameters
+        ----------
+        raw_doc: dict
+            Raw document data to be inserted.
+
+        """
         # wrap it up in a full document, for now
         m_content = json.dumps({
             '_type': DocumentType.FULL,
@@ -165,7 +191,19 @@ class StorcordClient:
             log.exception('shit')
             return InsertResult(0, None)
 
-    async def simple_query(self, query):
+    async def simple_query(self, query: dict) -> 'Document':
+        """Query all the collections for a document matching
+        the data described in ``query``.
+        
+        Paremeters
+        ----------
+        query: dict
+            Query object.
+            If it has an ``_id`` field, it checks in `IndexDB` if
+                an ID exists and gets it through :meth:`Collection.get_single`.
+
+            If not, gets passed to :meth:`Collection.simple_query`.
+        """
         if '_id' in query:
             wanted = int(query['_id'])
 
@@ -187,6 +225,15 @@ class StorcordClient:
                 return doc
 
         return None
+
+    async def multiple_query(self, query: dict) -> list:
+        """Query multiple documents."""
+        results = []
+        for coll in self.collections:
+            docs = await coll.multiple_query(query)
+            results += docs
+
+        return results
 
     async def update_one(self, query, set_on_doc):
         doc = await self.simple_query(query)
@@ -214,7 +261,5 @@ class StorcordClient:
         await coll.delete(doc)
         return DeleteResult(1)
 
-    async def multiple_query(self, query):
-        pass
 
 
